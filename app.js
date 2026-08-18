@@ -463,10 +463,16 @@ async function submitTransaction() {
   elements.submitTransactionBtn.disabled = true;
 
   try {
+    const custId = state.currentScannedData?.customer?.id ||
+                   state.currentScannedData?.customer?.customer_id ||
+                   state.currentScannedData?.customer_id ||
+                   state.currentScannedData?.id;
+
     const payload = {
-      customer_id: state.currentScannedData.customer.id,
+      customer_id: custId,
       bill_amount: billAmount,
       invoice_number: elements.invoiceNoInput.value.trim() || undefined,
+      merchant_id: state.merchant?.id || undefined,
     };
 
     const response = await fetch(`${state.apiBaseUrl}/api/v1/partners/scan/record-transaction/`, {
