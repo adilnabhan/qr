@@ -4,8 +4,18 @@
  */
 
 // State Management
+const defaultBackendUrl = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+  ? 'http://localhost:8000'
+  : 'https://discipl-backend.onrender.com';
+
+let savedApiUrl = localStorage.getItem('discipl_api_url');
+if (!savedApiUrl || savedApiUrl.includes('qr-') || savedApiUrl.includes('github.io')) {
+  savedApiUrl = defaultBackendUrl;
+  localStorage.setItem('discipl_api_url', savedApiUrl);
+}
+
 const state = {
-  apiBaseUrl: localStorage.getItem('discipl_api_url') || (window.location.origin.includes('localhost') ? 'http://localhost:8000' : window.location.origin),
+  apiBaseUrl: savedApiUrl,
   token: localStorage.getItem('discipl_partner_token') || null,
   staff: JSON.parse(localStorage.getItem('discipl_partner_staff') || 'null'),
   merchant: JSON.parse(localStorage.getItem('discipl_partner_merchant') || 'null'),
@@ -183,7 +193,12 @@ async function handleLogin(e) {
       body: JSON.stringify({ username, password })
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      throw new Error(`Cannot reach backend API (${response.status}). Please check Settings ⚙️ and ensure API URL is https://discipl-backend.onrender.com`);
+    }
 
     if (!response.ok) {
       throw new Error(data.error || data.detail || 'Login failed. Please check credentials.');
