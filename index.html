@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Discipl Partner - Cashier QR Scanner</title>
+  <meta name="theme-color" content="#121212">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- HTML5 QR Code Scanner CDN -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-badge">DISCIPL</div>
+        <span class="partner-tag">PARTNER PASS</span>
+      </div>
+      <div class="header-right" id="headerRight">
+        <button id="settingsBtn" class="icon-btn" title="API Settings">⚙️</button>
+        <button id="logoutBtn" class="icon-btn hidden" title="Logout">🚪</button>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+
+      <!-- 1. LOGIN SCREEN -->
+      <section id="loginScreen" class="screen active">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-icon">🏪</div>
+            <h2>Partner Cashier Login</h2>
+            <p>Scan member QR codes and apply instant Discipl discounts</p>
+          </div>
+          <form id="loginForm" class="auth-form">
+            <div class="form-group">
+              <label for="loginUsername">Username / Mobile</label>
+              <input type="text" id="loginUsername" placeholder="e.g. cashier_hotel1" required autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
+              <span class="btn-text">Sign In as Cashier</span>
+              <div class="spinner hidden" id="loginSpinner"></div>
+            </button>
+          </form>
+          <div id="loginError" class="alert alert-danger hidden"></div>
+        </div>
+      </section>
+
+      <!-- 2. SCANNER & CASHIER WORKSPACE -->
+      <section id="scannerScreen" class="screen">
+        <!-- Merchant Info Bar -->
+        <div class="merchant-bar">
+          <div class="merchant-info">
+            <h3 id="merchantName">Partner Merchant</h3>
+            <span id="merchantDiscountBadge" class="discount-pill">15% DISCOUNT</span>
+          </div>
+          <div class="staff-info">
+            <span class="staff-role" id="staffRole">Cashier</span>
+            <span class="staff-name" id="staffName">Staff</span>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="scanTab">📷 Scan QR</button>
+          <button class="tab-btn" data-tab="historyTab">📋 Today's Bills (<span id="todayCount">0</span>)</button>
+        </div>
+
+        <!-- TAB 1: SCAN VIEW -->
+        <div id="scanTab" class="tab-content active">
+          <!-- Step 1: Camera Scanner Card -->
+          <div class="scanner-card" id="scannerCard">
+            <div class="camera-wrapper">
+              <div id="reader"></div>
+              <div class="scanner-overlay" id="scannerOverlay">
+                <div class="scan-frame">
+                  <div class="corner tl"></div>
+                  <div class="corner tr"></div>
+                  <div class="corner bl"></div>
+                  <div class="corner br"></div>
+                  <div class="scan-laser"></div>
+                </div>
+                <p class="scan-instruction">Align customer Discipl QR code inside the frame</p>
+              </div>
+            </div>
+            <div class="scanner-actions">
+              <button id="toggleCameraBtn" class="btn btn-secondary btn-sm">🔄 Switch Camera</button>
+              <button id="manualEntryBtn" class="btn btn-outline btn-sm">⌨️ Enter Code Manually</button>
+            </div>
+          </div>
+
+          <!-- Manual Code Modal / Input -->
+          <div id="manualCodeBox" class="manual-code-box hidden">
+            <h4>Enter Member Token or Code</h4>
+            <div class="input-group">
+              <input type="text" id="manualCodeInput" placeholder="Paste QR token or DISC-XXXXXX">
+              <button id="verifyManualCodeBtn" class="btn btn-primary">Verify</button>
+            </div>
+            <button id="closeManualBtn" class="btn-link">Cancel</button>
+          </div>
+
+          <!-- Step 2: Verification Result & Bill Calculator (Shown after scan) -->
+          <div id="billCard" class="bill-card hidden">
+            <!-- Member Status Header -->
+            <div class="member-header" id="memberHeader">
+              <div class="member-avatar-wrap">
+                <img id="memberAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
+              </div>
+              <div class="member-details">
+                <div class="member-name-row">
+                  <h3 id="memberName">Customer Name</h3>
+                  <span id="memberStatusBadge" class="status-badge status-active">ACTIVE MEMBER</span>
+                </div>
+                <div class="member-meta">
+                  <span id="memberCode" class="member-code">DISC-000123</span>
+                  <span id="memberGym" class="member-gym">Alpha Fitness Nanminda</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Discount Notice -->
+            <div class="discount-banner">
+              <div class="discount-icon">🎉</div>
+              <div class="discount-text">
+                <strong id="eligibleDiscountText">15% Instant Discount Applicable</strong>
+                <span>Eligible Discipl VIP Member</span>
+              </div>
+            </div>
+
+            <!-- Bill Calculator Form -->
+            <div class="bill-form">
+              <div class="form-group">
+                <label for="billAmountInput">Original Bill Amount (₹)</label>
+                <div class="currency-input-wrap">
+                  <span class="currency-prefix">₹</span>
+                  <input type="number" id="billAmountInput" placeholder="0.00" step="0.01" min="1" autofocus>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="invoiceNoInput">Bill / Invoice Number (Optional)</label>
+                <input type="text" id="invoiceNoInput" placeholder="e.g. INV-10492">
+              </div>
+
+              <!-- Live Breakdown Summary -->
+              <div class="breakdown-card">
+                <div class="breakdown-row">
+                  <span>Gross Total</span>
+                  <span id="breakdownGross">₹0.00</span>
+                </div>
+                <div class="breakdown-row highlight-green">
+                  <span>Discipl Discount (<span id="breakdownDiscountRate">15%</span>)</span>
+                  <span id="breakdownDiscountAmount">- ₹0.00</span>
+                </div>
+                <div class="breakdown-divider"></div>
+                <div class="breakdown-row grand-total">
+                  <span>Final Payable Amount</span>
+                  <span id="breakdownFinalAmount">₹0.00</span>
+                </div>
+                <div class="breakdown-row reward-row">
+                  <span>Customer Reward XP Earned</span>
+                  <span id="breakdownPoints" class="reward-xp">+ 0 XP</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="bill-actions">
+                <button id="resetScanBtn" class="btn btn-secondary">Cancel</button>
+                <button id="submitTransactionBtn" class="btn btn-success btn-lg">
+                  <span class="btn-text">Confirm & Record Bill</span>
+                  <div class="spinner hidden" id="submitSpinner"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: TODAY'S TRANSACTIONS HISTORY -->
+        <div id="historyTab" class="tab-content">
+          <div class="history-header">
+            <h4>Today's Scanned Bills</h4>
+            <div class="history-summary">
+              <div class="stat-pill">
+                <span>Total Bills:</span>
+                <strong id="statTotalBills">0</strong>
+              </div>
+              <div class="stat-pill">
+                <span>Total Sales:</span>
+                <strong id="statTotalSales">₹0.00</strong>
+              </div>
+              <div class="stat-pill">
+                <span>Discounts Given:</span>
+                <strong id="statTotalDiscounts">₹0.00</strong>
+              </div>
+            </div>
+          </div>
+          <div id="historyList" class="history-list">
+            <div class="empty-history">
+              <span>🧾 No transactions recorded yet today</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RECEIPT MODAL POPUP -->
+    <div id="receiptModal" class="modal-backdrop hidden">
+      <div class="receipt-card">
+        <div class="receipt-icon">✅</div>
+        <h2>Discount Applied!</h2>
+        <p class="receipt-subtitle">Transaction Recorded Successfully</p>
+
+        <div class="receipt-ticket">
+          <div class="ticket-row">
+            <span>Transaction ID</span>
+            <strong id="receiptTxnId">#000</strong>
+          </div>
+          <div class="ticket-row">
+            <span>Customer</span>
+            <strong id="receiptCustomer">Customer</strong>
+          </div>
+          <div class="ticket-row">
+            <span>Original Bill</span>
+            <span id="receiptOriginal">₹0.00</span>
+          </div>
+          <div class="ticket-row discount-row">
+            <span>Discount Saved</span>
+            <strong id="receiptDiscount">- ₹0.00</strong>
+          </div>
+          <div class="ticket-divider"></div>
+          <div class="ticket-row final-row">
+            <span>Amount Paid</span>
+            <strong id="receiptFinal">₹0.00</strong>
+          </div>
+          <div class="ticket-row points-row">
+            <span>Discipl Points Credited</span>
+            <span id="receiptPoints" class="points-badge">+0 XP</span>
+          </div>
+        </div>
+
+        <button id="closeReceiptBtn" class="btn btn-primary btn-block">Scan Next Customer</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <h3>Backend API Settings</h3>
+        <p>Configure the server endpoint for the scanner</p>
+        <div class="form-group">
+          <label for="apiUrlInput">API Base URL</label>
+          <input type="text" id="apiUrlInput" placeholder="https://discipl.app">
+          <small>For local testing: <code>http://localhost:8000</code> or your Render URL</small>
+        </div>
+        <div class="modal-actions">
+          <button id="saveSettingsBtn" class="btn btn-primary">Save & Apply</button>
+          <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
