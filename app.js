@@ -26,6 +26,56 @@ const state = {
   isScanning: false,
 };
 
+// Helper functions for discount eligibility and calculations
+function getIsEligible(data) {
+  if (!data) return false;
+  if (typeof data.is_eligible_for_discount === 'boolean') return data.is_eligible_for_discount;
+  if (typeof data.eligible_for_discount === 'boolean') return data.eligible_for_discount;
+  if (data.customer && typeof data.customer.is_eligible_for_discount === 'boolean') return data.customer.is_eligible_for_discount;
+  if (data.customer && typeof data.customer.eligible_for_discount === 'boolean') return data.customer.eligible_for_discount;
+  if (data.discount_info && typeof data.discount_info.eligible_for_discount === 'boolean') return data.discount_info.eligible_for_discount;
+  if (data.discount_offer && typeof data.discount_offer.eligible_for_discount === 'boolean') return data.discount_offer.eligible_for_discount;
+  if (typeof data.is_active_member === 'boolean') return data.is_active_member;
+  if (data.customer && typeof data.customer.is_active_member === 'boolean') return data.customer.is_active_member;
+  return false;
+}
+
+function getDiscountPercentage(data, merchant, isEligible) {
+  if (!isEligible) return 0;
+  const offer = data?.discount_offer || data?.discount_info;
+  if (offer && offer.discount_percentage !== undefined && offer.discount_percentage !== null) {
+    const val = parseFloat(offer.discount_percentage);
+    if (!isNaN(val)) return val;
+  }
+  if (merchant && merchant.discount_percentage !== undefined && merchant.discount_percentage !== null) {
+    const val = parseFloat(merchant.discount_percentage);
+    if (!isNaN(val)) return val;
+  }
+  return 0;
+}
+
+function getMinBillAmount(data, merchant) {
+  const offer = data?.discount_offer || data?.discount_info;
+  if (offer && offer.min_bill_amount !== undefined && offer.min_bill_amount !== null) {
+    return parseFloat(offer.min_bill_amount) || 0;
+  }
+  if (merchant && merchant.min_bill_amount !== undefined && merchant.min_bill_amount !== null) {
+    return parseFloat(merchant.min_bill_amount) || 0;
+  }
+  return 0;
+}
+
+function getMaxDiscountAmount(data, merchant) {
+  const offer = data?.discount_offer || data?.discount_info;
+  if (offer && offer.max_discount_amount !== undefined && offer.max_discount_amount !== null) {
+    return parseFloat(offer.max_discount_amount) || null;
+  }
+  if (merchant && merchant.max_discount_amount !== undefined && merchant.max_discount_amount !== null) {
+    return parseFloat(merchant.max_discount_amount) || null;
+  }
+  return null;
+}
+
 // DOM Elements
 const elements = {
   // Screens
@@ -77,8 +127,14 @@ const elements = {
   memberStatusBadge: document.getElementById('memberStatusBadge'),
   memberCode: document.getElementById('memberCode'),
   memberGym: document.getElementById('memberGym'),
+  discountBanner: document.getElementById('discountBanner'),
+  discountIcon: document.getElementById('discountIcon'),
   eligibleDiscountText: document.getElementById('eligibleDiscountText'),
+  eligibleReasonText: document.getElementById('eligibleReasonText'),
+  minPurchaseNotice: document.getElementById('minPurchaseNotice'),
   billAmountInput: document.getElementById('billAmountInput'),
+  minPurchaseWarning: document.getElementById('minPurchaseWarning'),
+  warningMinAmount: document.getElementById('warningMinAmount'),
   invoiceNoInput: document.getElementById('invoiceNoInput'),
 
   // Breakdown
@@ -252,7 +308,8 @@ function showScannerScreen() {
   // Populate Merchant Info
   if (state.merchant) {
     elements.merchantName.textContent = state.merchant.name;
-    elements.merchantDiscountBadge.textContent = `${state.merchant.discount_percentage}% DISCOUNT`;
+    const discPct = state.merchant.discount_percentage || 0;
+    elements.merchantDiscountBadge.textContent = `${discPct}% DISCOUNT`;
   }
   if (state.staff) {
     elements.staffName.textContent = state.staff.name;
@@ -293,7 +350,6 @@ async function startCameraScanner() {
       return;
     }
 
-    // Default to back camera on mobile
     let cameraId = state.cameras[0].id;
     for (let i = 0; i < state.cameras.length; i++) {
       const label = state.cameras[i].label.toLowerCase();
@@ -314,12 +370,9 @@ async function startCameraScanner() {
       cameraId,
       config,
       (decodedText) => {
-        // Success callback
         onQrCodeScanned(decodedText);
       },
-      (errorMessage) => {
-        // Scan parse error, continuous looking
-      }
+      () => {}
     );
 
     state.isScanning = true;
@@ -351,7 +404,6 @@ async function toggleCamera() {
 }
 
 function onQrCodeScanned(qrData) {
-  // Beep sound / vibration feedback
   if (navigator.vibrate) {
     navigator.vibrate([80, 50, 80]);
   }
@@ -394,30 +446,53 @@ async function verifyQrCode(token) {
 // Render Verification & Bill Calculator
 // -------------------------------------------------------------
 function renderBillVerificationCard(data) {
-  const customer = data.customer || {};
-  const discountOffer = data.discount_offer || {};
+  state.currentScannedData = data;
+  const customer = data.customer || data;
+  const isEligible = getIsEligible(data);
+  const discPct = getDiscountPercentage(data, state.merchant, isEligible);
+  const minBill = getMinBillAmount(data, state.merchant);
+  const maxCap = getMaxDiscountAmount(data, state.merchant);
+  const reason = data.eligibility_reason || customer.eligibility_reason || (isEligible ? 'Eligible Discipl VIP Member' : 'Not eligible for discount (Membership expired, no recent workout or steps)');
 
-  elements.memberName.textContent = customer.name || 'Discipl Member';
-  elements.memberCode.textContent = customer.member_code || `DISC-${customer.id}`;
-  elements.memberGym.textContent = customer.gym_name || 'Discipl Fitness Center';
+  elements.memberName.textContent = customer.name || customer.customer_name || 'Discipl Member';
+  elements.memberCode.textContent = customer.member_code || `DISC-${customer.id || customer.customer_id || ''}`;
+  elements.memberGym.textContent = customer.gym_name || customer.home_gym || 'Discipl Fitness Center';
 
-  if (customer.profile_image) {
-    elements.memberAvatar.src = customer.profile_image;
+  if (customer.profile_image || customer.profile_picture) {
+    elements.memberAvatar.src = customer.profile_image || customer.profile_picture;
   }
 
-  // Active status badge
-  if (customer.is_active_member) {
-    elements.memberStatusBadge.textContent = 'ACTIVE MEMBER';
+  // Active / Eligible status badge
+  if (isEligible) {
+    elements.memberStatusBadge.textContent = 'ELIGIBLE FOR DISCOUNT';
     elements.memberStatusBadge.className = 'status-badge status-active';
+    if (elements.discountBanner) elements.discountBanner.classList.remove('not-eligible');
+    if (elements.discountIcon) elements.discountIcon.textContent = '🎉';
+
+    let discText = `${discPct}% Instant Discount Applicable`;
+    if (maxCap && maxCap > 0) {
+      discText += ` (Up to ₹${maxCap.toFixed(2)})`;
+    }
+    elements.eligibleDiscountText.textContent = discText;
   } else {
-    elements.memberStatusBadge.textContent = 'INACTIVE / EXPIRED';
+    elements.memberStatusBadge.textContent = 'NOT ELIGIBLE FOR DISCOUNT';
     elements.memberStatusBadge.className = 'status-badge status-inactive';
+    if (elements.discountBanner) elements.discountBanner.classList.add('not-eligible');
+    if (elements.discountIcon) elements.discountIcon.textContent = '⚠️';
+    elements.eligibleDiscountText.textContent = '0% Discount (Conditions Not Met)';
   }
 
-  // Discount text
-  const discPct = discountOffer.discount_percentage || state.merchant.discount_percentage || 10;
-  elements.eligibleDiscountText.textContent = `${discPct}% Instant Discount Applicable`;
-  elements.breakdownDiscountRate.textContent = `${discPct}%`;
+  if (elements.eligibleReasonText) {
+    elements.eligibleReasonText.textContent = reason;
+  }
+
+  // Min purchase notice
+  if (minBill > 0 && elements.minPurchaseNotice) {
+    elements.minPurchaseNotice.textContent = `Min Purchase: ₹${minBill.toFixed(2)}`;
+    elements.minPurchaseNotice.classList.remove('hidden');
+  } else if (elements.minPurchaseNotice) {
+    elements.minPurchaseNotice.classList.add('hidden');
+  }
 
   elements.billCard.classList.remove('hidden');
   elements.billAmountInput.value = '';
@@ -430,19 +505,43 @@ function renderBillVerificationCard(data) {
 // -------------------------------------------------------------
 function calculateBreakdown() {
   const grossAmount = parseFloat(elements.billAmountInput.value) || 0;
-  const discPct = state.currentScannedData?.discount_offer?.discount_percentage || state.merchant?.discount_percentage || 10;
-  const maxCap = state.currentScannedData?.discount_offer?.max_discount_amount || state.merchant?.max_discount_amount || null;
-  const ptsPer100 = state.currentScannedData?.discount_offer?.reward_points_per_100 || state.merchant?.reward_points_per_100_inr || 5;
+  const isEligible = getIsEligible(state.currentScannedData);
+  const discPct = getDiscountPercentage(state.currentScannedData, state.merchant, isEligible);
+  const minBill = getMinBillAmount(state.currentScannedData, state.merchant);
+  const maxCap = getMaxDiscountAmount(state.currentScannedData, state.merchant);
+  const ptsPer100 = state.currentScannedData?.discount_offer?.reward_points_per_100 ||
+                    state.currentScannedData?.discount_info?.reward_points_per_100 ||
+                    state.merchant?.reward_points_per_100_inr || 5;
 
-  let discountAmount = (grossAmount * discPct) / 100;
-  if (maxCap && discountAmount > maxCap) {
-    discountAmount = maxCap;
+  let discountAmount = 0;
+  let isBelowMin = false;
+
+  if (isEligible && discPct > 0) {
+    if (minBill > 0 && grossAmount > 0 && grossAmount < minBill) {
+      isBelowMin = true;
+      discountAmount = 0;
+    } else if (grossAmount >= minBill) {
+      discountAmount = (grossAmount * discPct) / 100;
+      if (maxCap && discountAmount > maxCap) {
+        discountAmount = maxCap;
+      }
+    }
+  }
+
+  if (elements.minPurchaseWarning && elements.warningMinAmount) {
+    if (isBelowMin) {
+      elements.warningMinAmount.textContent = minBill.toFixed(2);
+      elements.minPurchaseWarning.classList.remove('hidden');
+    } else {
+      elements.minPurchaseWarning.classList.add('hidden');
+    }
   }
 
   const finalAmount = Math.max(0, grossAmount - discountAmount);
   const earnedPoints = Math.floor((finalAmount / 100) * ptsPer100);
 
   elements.breakdownGross.textContent = `₹${grossAmount.toFixed(2)}`;
+  elements.breakdownDiscountRate.textContent = `${discPct}%`;
   elements.breakdownDiscountAmount.textContent = `- ₹${discountAmount.toFixed(2)}`;
   elements.breakdownFinalAmount.textContent = `₹${finalAmount.toFixed(2)}`;
   elements.breakdownPoints.textContent = `+ ${earnedPoints} XP`;
@@ -504,12 +603,12 @@ async function submitTransaction() {
 // Show Receipt Modal
 // -------------------------------------------------------------
 function showReceiptModal(receipt) {
-  elements.receiptTxnId.textContent = `#${receipt.transaction_id || receipt.id}`;
+  elements.receiptTxnId.textContent = `#${receipt.transaction_id || receipt.id || ''}`;
   elements.receiptCustomer.textContent = receipt.customer_name || state.currentScannedData?.customer?.name || 'Customer';
-  elements.receiptOriginal.textContent = `₹${parseFloat(receipt.bill_amount).toFixed(2)}`;
-  elements.receiptDiscount.textContent = `- ₹${parseFloat(receipt.discount_amount).toFixed(2)} (${receipt.discount_percentage}%)`;
-  elements.receiptFinal.textContent = `₹${parseFloat(receipt.final_amount).toFixed(2)}`;
-  elements.receiptPoints.textContent = `+${receipt.points_awarded || 0} XP`;
+  elements.receiptOriginal.textContent = `₹${parseFloat(receipt.bill_amount || receipt.original_bill_amount || 0).toFixed(2)}`;
+  elements.receiptDiscount.textContent = `- ₹${parseFloat(receipt.discount_amount || receipt.discount_saved || 0).toFixed(2)} (${receipt.discount_percentage || 0}%)`;
+  elements.receiptFinal.textContent = `₹${parseFloat(receipt.final_amount || receipt.final_amount_payable || 0).toFixed(2)}`;
+  elements.receiptPoints.textContent = `+${receipt.points_awarded || receipt.points_earned || 0} XP`;
 
   elements.receiptModal.classList.remove('hidden');
 }
@@ -570,8 +669,8 @@ function renderHistoryList(transactions) {
           <span>${dateStr} ${t.invoice_number ? '• ' + t.invoice_number : ''}</span>
         </div>
         <div class="history-item-right">
-          <div class="history-final-price">₹${parseFloat(t.final_amount).toFixed(2)}</div>
-          <div class="history-saved">Saved ₹${parseFloat(t.discount_amount).toFixed(2)} (${t.discount_percentage}%)</div>
+          <div class="history-final-price">₹${parseFloat(t.final_amount || t.final_amount_payable || 0).toFixed(2)}</div>
+          <div class="history-saved">Saved ₹${parseFloat(t.discount_amount || t.discount_saved || 0).toFixed(2)} (${t.discount_percentage || 0}%)</div>
         </div>
       </div>
     `;
