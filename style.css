@@ -888,6 +888,10 @@ body {
   display: none !important;
 }
 
+#qr-shaded-region {
+  display: none !important;
+}
+
 /* Additional Discount Rules & Minimum Purchase Badges */
 .discount-banner.not-eligible {
   background: linear-gradient(135deg, rgba(120, 120, 120, 0.15) 0%, rgba(60, 60, 60, 0.05) 100%);

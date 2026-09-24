@@ -24,7 +24,6 @@
         <span class="partner-tag">PARTNER PASS</span>
       </div>
       <div class="header-right" id="headerRight">
-        <button id="settingsBtn" class="icon-btn" title="API Settings">⚙️</button>
         <button id="logoutBtn" class="icon-btn hidden" title="Logout">🚪</button>
       </div>
     </header>
@@ -92,7 +91,6 @@
                   <div class="corner br"></div>
                   <div class="scan-laser"></div>
                 </div>
-                <p class="scan-instruction">Align customer Discipl QR code inside the frame</p>
               </div>
             </div>
             <div class="scanner-actions">
@@ -258,23 +256,6 @@
         </div>
 
         <button id="closeReceiptBtn" class="btn btn-primary btn-block">Scan Next Customer</button>
-      </div>
-    </div>
-
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <h3>Backend API Settings</h3>
-        <p>Configure the server endpoint for the scanner</p>
-        <div class="form-group">
-          <label for="apiUrlInput">API Base URL</label>
-          <input type="text" id="apiUrlInput" placeholder="https://discipl.app">
-          <small>For local testing: <code>http://localhost:8000</code> or your Render URL</small>
-        </div>
-        <div class="modal-actions">
-          <button id="saveSettingsBtn" class="btn btn-primary">Save & Apply</button>
-          <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
-        </div>
       </div>
     </div>
 

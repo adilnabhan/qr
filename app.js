@@ -8,14 +8,10 @@ const defaultBackendUrl = (window.location.origin.includes('localhost') || windo
   ? 'http://localhost:8000'
   : 'https://discipl-backend.onrender.com';
 
-let savedApiUrl = localStorage.getItem('discipl_api_url');
-if (!savedApiUrl || savedApiUrl.includes('qr-') || savedApiUrl.includes('github.io')) {
-  savedApiUrl = defaultBackendUrl;
-  localStorage.setItem('discipl_api_url', savedApiUrl);
-}
+localStorage.removeItem('discipl_api_url');
 
 const state = {
-  apiBaseUrl: savedApiUrl,
+  apiBaseUrl: defaultBackendUrl,
   token: localStorage.getItem('discipl_partner_token') || null,
   staff: JSON.parse(localStorage.getItem('discipl_partner_staff') || 'null'),
   merchant: JSON.parse(localStorage.getItem('discipl_partner_merchant') || 'null'),
@@ -82,14 +78,9 @@ const elements = {
   loginScreen: document.getElementById('loginScreen'),
   scannerScreen: document.getElementById('scannerScreen'),
 
-  // Header & Settings
+  // Header
   headerRight: document.getElementById('headerRight'),
   logoutBtn: document.getElementById('logoutBtn'),
-  settingsBtn: document.getElementById('settingsBtn'),
-  settingsModal: document.getElementById('settingsModal'),
-  apiUrlInput: document.getElementById('apiUrlInput'),
-  saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-  closeSettingsBtn: document.getElementById('closeSettingsBtn'),
 
   // Login
   loginForm: document.getElementById('loginForm'),
@@ -169,7 +160,6 @@ const elements = {
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
-  elements.apiUrlInput.value = state.apiBaseUrl;
 
   if (state.token && state.staff && state.merchant) {
     showScannerScreen();
@@ -183,19 +173,6 @@ function setupEventListeners() {
   // Login
   elements.loginForm.addEventListener('submit', handleLogin);
   elements.logoutBtn.addEventListener('click', handleLogout);
-
-  // Settings
-  elements.settingsBtn.addEventListener('click', () => elements.settingsModal.classList.remove('hidden'));
-  elements.closeSettingsBtn.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
-  elements.saveSettingsBtn.addEventListener('click', () => {
-    const newUrl = elements.apiUrlInput.value.trim().replace(/\/+$/, '');
-    if (newUrl) {
-      state.apiBaseUrl = newUrl;
-      localStorage.setItem('discipl_api_url', newUrl);
-      elements.settingsModal.classList.add('hidden');
-      alert(`API URL updated to: ${newUrl}`);
-    }
-  });
 
   // Tabs
   elements.tabBtns.forEach(btn => {
@@ -253,7 +230,7 @@ async function handleLogin(e) {
     try {
       data = await response.json();
     } catch (parseErr) {
-      throw new Error(`Cannot reach backend API (${response.status}). Please check Settings ⚙️ and ensure API URL is https://discipl-backend.onrender.com`);
+      throw new Error(`Unable to reach server (${response.status}). Please try again.`);
     }
 
     if (!response.ok) {
