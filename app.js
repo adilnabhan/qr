@@ -6,12 +6,16 @@
 // State Management
 const defaultBackendUrl = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
   ? 'http://localhost:8000'
-  : 'https://discipl-backend.onrender.com';
+  : 'https://app.thediscipl.com';
 
-localStorage.removeItem('discipl_api_url');
+let savedApiUrl = localStorage.getItem('discipl_api_url');
+if (!savedApiUrl || savedApiUrl.includes('qr-') || savedApiUrl.includes('github.io') || savedApiUrl.includes('onrender.com')) {
+  savedApiUrl = defaultBackendUrl;
+  localStorage.setItem('discipl_api_url', savedApiUrl);
+}
 
 const state = {
-  apiBaseUrl: defaultBackendUrl,
+  apiBaseUrl: savedApiUrl,
   token: localStorage.getItem('discipl_partner_token') || null,
   staff: JSON.parse(localStorage.getItem('discipl_partner_staff') || 'null'),
   merchant: JSON.parse(localStorage.getItem('discipl_partner_merchant') || 'null'),
@@ -160,6 +164,7 @@ const elements = {
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
+  elements.apiUrlInput.value = state.apiBaseUrl;
 
   if (state.token && state.staff && state.merchant) {
     showScannerScreen();
@@ -173,6 +178,8 @@ function setupEventListeners() {
   // Login
   elements.loginForm.addEventListener('submit', handleLogin);
   elements.logoutBtn.addEventListener('click', handleLogout);
+
+
 
   // Tabs
   elements.tabBtns.forEach(btn => {
@@ -204,6 +211,7 @@ function setupEventListeners() {
   elements.closeReceiptBtn.addEventListener('click', () => {
     elements.receiptModal.classList.add('hidden');
     resetToScan();
+    loadTodayHistory();
   });
 }
 
@@ -230,7 +238,7 @@ async function handleLogin(e) {
     try {
       data = await response.json();
     } catch (parseErr) {
-      throw new Error(`Unable to reach server (${response.status}). Please try again.`);
+      throw new Error(`Cannot reach backend API (${response.status}). Please check your internet connection.`);
     }
 
     if (!response.ok) {
@@ -402,7 +410,10 @@ async function verifyQrCode(token) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${state.token}`
       },
-      body: JSON.stringify({ token })
+      body: JSON.stringify({ 
+        token,
+        merchant_id: state.merchant?.id 
+      })
     });
 
     const data = await response.json();
@@ -518,7 +529,13 @@ function calculateBreakdown() {
   const earnedPoints = Math.floor((finalAmount / 100) * ptsPer100);
 
   elements.breakdownGross.textContent = `₹${grossAmount.toFixed(2)}`;
-  elements.breakdownDiscountRate.textContent = `${discPct}%`;
+  const offerData = state.currentScannedData?.discount_offer || state.currentScannedData?.discount_info;
+  const maxCapPct = parseFloat(offerData?.max_discount_percentage || state.merchant?.discount_percentage || 0);
+  if (maxCapPct > 0 && discPct < maxCapPct) {
+    elements.breakdownDiscountRate.textContent = `${discPct}% (Up to ${maxCapPct}%)`;
+  } else {
+    elements.breakdownDiscountRate.textContent = `${discPct}%`;
+  }
   elements.breakdownDiscountAmount.textContent = `- ₹${discountAmount.toFixed(2)}`;
   elements.breakdownFinalAmount.textContent = `₹${finalAmount.toFixed(2)}`;
   elements.breakdownPoints.textContent = `+ ${earnedPoints} XP`;
@@ -544,9 +561,13 @@ async function submitTransaction() {
                    state.currentScannedData?.customer_id ||
                    state.currentScannedData?.id;
 
+    const isEligible = getIsEligible(state.currentScannedData);
+    const discPct = getDiscountPercentage(state.currentScannedData, state.merchant, isEligible);
+
     const payload = {
       customer_id: custId,
       bill_amount: billAmount,
+      discount_percentage: discPct,
       invoice_number: elements.invoiceNoInput.value.trim() || undefined,
       merchant_id: state.merchant?.id || undefined,
     };
@@ -612,19 +633,52 @@ async function loadTodayHistory() {
       })
     ]);
 
-    if (dashRes.ok) {
-      const dashData = await dashRes.json();
-      const stats = dashData.today_stats || dashData.stats || {};
-      elements.statTotalBills.textContent = stats.total_scans || stats.total_transactions || '0';
-      elements.todayCount.textContent = stats.total_scans || stats.total_transactions || '0';
-      elements.statTotalSales.textContent = `₹${parseFloat(stats.total_sales_amount || 0).toFixed(2)}`;
-      elements.statTotalDiscounts.textContent = `₹${parseFloat(stats.total_discount_given || 0).toFixed(2)}`;
-    }
-
+    let transactions = [];
     if (txnRes.ok) {
       const txnData = await txnRes.json();
-      const transactions = txnData.transactions || txnData.results || txnData || [];
+      transactions = txnData.transactions || txnData.results || (Array.isArray(txnData) ? txnData : []);
       renderHistoryList(transactions);
+    }
+
+    let statsLoaded = false;
+    if (dashRes.ok) {
+      const dashData = await dashRes.json();
+      const stats = dashData.today_stats || dashData.today_metrics || dashData.stats || {};
+      const totalBills = stats.total_scans ?? stats.scans_count ?? stats.total_transactions;
+      const totalSales = stats.total_sales_amount ?? stats.total_net_revenue ?? stats.total_bill_amount;
+      const totalDiscounts = stats.total_discount_given ?? stats.total_discounts;
+
+      if (totalBills !== undefined && totalBills !== null) {
+        elements.statTotalBills.textContent = totalBills;
+        elements.todayCount.textContent = totalBills;
+        if (Number(totalBills) > 0) statsLoaded = true;
+      }
+      if (totalSales !== undefined && totalSales !== null) {
+        elements.statTotalSales.textContent = `₹${parseFloat(totalSales || 0).toFixed(2)}`;
+      }
+      if (totalDiscounts !== undefined && totalDiscounts !== null) {
+        elements.statTotalDiscounts.textContent = `₹${parseFloat(totalDiscounts || 0).toFixed(2)}`;
+      }
+    }
+
+    // Client-side fallback: If dashboard stats evaluated to 0 or failed to load,
+    // but transactions are present in today's list, compute stats directly from the transactions array.
+    if (transactions.length > 0 && (!statsLoaded || elements.statTotalBills.textContent === '0')) {
+      const todayStr = new Date().toDateString();
+      const todayTxns = transactions.filter(t => {
+        if (!t.created_at) return true;
+        return new Date(t.created_at).toDateString() === todayStr;
+      });
+      const activeList = todayTxns.length > 0 ? todayTxns : transactions;
+
+      const calcBills = activeList.length;
+      const calcSales = activeList.reduce((sum, t) => sum + parseFloat(t.final_amount || t.final_amount_payable || t.bill_amount || 0), 0);
+      const calcDiscounts = activeList.reduce((sum, t) => sum + parseFloat(t.discount_amount || t.discount_saved || 0), 0);
+
+      elements.statTotalBills.textContent = calcBills;
+      elements.todayCount.textContent = calcBills;
+      elements.statTotalSales.textContent = `₹${calcSales.toFixed(2)}`;
+      elements.statTotalDiscounts.textContent = `₹${calcDiscounts.toFixed(2)}`;
     }
   } catch (err) {
     console.error("History fetch error:", err);
