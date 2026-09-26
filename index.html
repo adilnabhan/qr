@@ -74,7 +74,7 @@
         <!-- Tab Navigation -->
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="scanTab">📷 Scan QR</button>
-          <button class="tab-btn" data-tab="historyTab">📋 Today's Bills (<span id="todayCount">0</span>)</button>
+          <button class="tab-btn" data-tab="historyTab">📋 Bill History (<span id="todayCount">0</span>)</button>
         </div>
 
         <!-- TAB 1: SCAN VIEW -->
@@ -191,10 +191,15 @@
           </div>
         </div>
 
-        <!-- TAB 2: TODAY'S TRANSACTIONS HISTORY -->
+        <!-- TAB 2: BILL HISTORY -->
         <div id="historyTab" class="tab-content">
           <div class="history-header">
-            <h4>Today's Scanned Bills</h4>
+            <h4>Bill History</h4>
+            <div class="history-filter-bar">
+              <button class="filter-btn active" data-period="today">Today's Bills</button>
+              <button class="filter-btn" data-period="month">Monthly Bills</button>
+              <button class="filter-btn" data-period="year">Yearly Bills</button>
+            </div>
             <div class="history-summary">
               <div class="stat-pill">
                 <span>Total Bills:</span>
@@ -212,7 +217,7 @@
           </div>
           <div id="historyList" class="history-list">
             <div class="empty-history">
-              <span>🧾 No transactions recorded yet today</span>
+              <span>🧾 No transactions recorded yet</span>
             </div>
           </div>
         </div>

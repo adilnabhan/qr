@@ -677,6 +677,42 @@ body {
   margin-bottom: 12px;
 }
 
+.history-filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  background: var(--bg-input);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 8px 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.filter-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.filter-btn.active {
+  background: var(--accent-red);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
+}
+
 .history-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

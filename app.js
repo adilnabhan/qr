@@ -186,6 +186,18 @@ function setupEventListeners() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
+  // Bill History Period Filters (Today, Monthly, Yearly)
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const period = btn.dataset.period || 'today';
+      state.currentPeriod = period;
+      loadHistory(period);
+    });
+  });
+
   // Camera & Manual
   elements.toggleCameraBtn.addEventListener('click', toggleCamera);
   elements.manualEntryBtn.addEventListener('click', () => {
@@ -620,15 +632,16 @@ function resetToScan() {
 }
 
 // -------------------------------------------------------------
-// Load Today's History & Dashboard Stats
+// Load Bill History & Dashboard Stats (Period: today, month, year)
 // -------------------------------------------------------------
-async function loadTodayHistory() {
+async function loadHistory(period = 'today') {
+  state.currentPeriod = period;
   try {
     const [dashRes, txnRes] = await Promise.all([
-      fetch(`${state.apiBaseUrl}/api/v1/partners/dashboard/`, {
+      fetch(`${state.apiBaseUrl}/api/v1/partners/dashboard/?period=${period}`, {
         headers: { 'Authorization': `Bearer ${state.token}` }
       }),
-      fetch(`${state.apiBaseUrl}/api/v1/partners/transactions/`, {
+      fetch(`${state.apiBaseUrl}/api/v1/partners/transactions/?period=${period}&page_size=100`, {
         headers: { 'Authorization': `Bearer ${state.token}` }
       })
     ]);
@@ -637,20 +650,22 @@ async function loadTodayHistory() {
     if (txnRes.ok) {
       const txnData = await txnRes.json();
       transactions = txnData.transactions || txnData.results || (Array.isArray(txnData) ? txnData : []);
-      renderHistoryList(transactions);
+      renderHistoryList(transactions, period);
     }
 
     let statsLoaded = false;
     if (dashRes.ok) {
       const dashData = await dashRes.json();
-      const stats = dashData.today_stats || dashData.today_metrics || dashData.stats || {};
+      const stats = dashData.period_metrics || dashData.today_stats || dashData.today_metrics || dashData.stats || {};
       const totalBills = stats.total_scans ?? stats.scans_count ?? stats.total_transactions;
       const totalSales = stats.total_sales_amount ?? stats.total_net_revenue ?? stats.total_bill_amount;
       const totalDiscounts = stats.total_discount_given ?? stats.total_discounts;
 
       if (totalBills !== undefined && totalBills !== null) {
         elements.statTotalBills.textContent = totalBills;
-        elements.todayCount.textContent = totalBills;
+        if (elements.todayCount) {
+          elements.todayCount.textContent = totalBills;
+        }
         if (Number(totalBills) > 0) statsLoaded = true;
       }
       if (totalSales !== undefined && totalSales !== null) {
@@ -662,21 +677,32 @@ async function loadTodayHistory() {
     }
 
     // Client-side fallback: If dashboard stats evaluated to 0 or failed to load,
-    // but transactions are present in today's list, compute stats directly from the transactions array.
+    // compute stats directly from the period-filtered transactions.
     if (transactions.length > 0 && (!statsLoaded || elements.statTotalBills.textContent === '0')) {
-      const todayStr = new Date().toDateString();
-      const todayTxns = transactions.filter(t => {
+      const now = new Date();
+      const filteredTxns = transactions.filter(t => {
         if (!t.created_at) return true;
-        return new Date(t.created_at).toDateString() === todayStr;
+        const tDate = new Date(t.created_at);
+        if (period === 'today') {
+          return tDate.toDateString() === now.toDateString();
+        } else if (period === 'month') {
+          return tDate.getFullYear() === now.getFullYear() && tDate.getMonth() === now.getMonth();
+        } else if (period === 'year') {
+          return tDate.getFullYear() === now.getFullYear();
+        }
+        return true;
       });
-      const activeList = todayTxns.length > 0 ? todayTxns : transactions;
+      const activeList = filteredTxns;
+      renderHistoryList(activeList, period);
 
       const calcBills = activeList.length;
       const calcSales = activeList.reduce((sum, t) => sum + parseFloat(t.final_amount || t.final_amount_payable || t.bill_amount || 0), 0);
       const calcDiscounts = activeList.reduce((sum, t) => sum + parseFloat(t.discount_amount || t.discount_saved || 0), 0);
 
       elements.statTotalBills.textContent = calcBills;
-      elements.todayCount.textContent = calcBills;
+      if (elements.todayCount) {
+        elements.todayCount.textContent = calcBills;
+      }
       elements.statTotalSales.textContent = `₹${calcSales.toFixed(2)}`;
       elements.statTotalDiscounts.textContent = `₹${calcDiscounts.toFixed(2)}`;
     }
@@ -685,14 +711,30 @@ async function loadTodayHistory() {
   }
 }
 
-function renderHistoryList(transactions) {
+// Backward-compatible alias for existing callers
+function loadTodayHistory() {
+  return loadHistory(state.currentPeriod || 'today');
+}
+
+function renderHistoryList(transactions, period = 'today') {
   if (!transactions || transactions.length === 0) {
-    elements.historyList.innerHTML = `<div class="empty-history"><span>🧾 No transactions recorded yet today</span></div>`;
+    let emptyMsg = 'No transactions recorded yet today';
+    if (period === 'month') emptyMsg = 'No transactions recorded this month';
+    else if (period === 'year') emptyMsg = 'No transactions recorded this year';
+    elements.historyList.innerHTML = `<div class="empty-history"><span>🧾 ${emptyMsg}</span></div>`;
     return;
   }
 
   elements.historyList.innerHTML = transactions.map(t => {
-    const dateStr = t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    let dateStr = '';
+    if (t.created_at) {
+      const dt = new Date(t.created_at);
+      if (period === 'today') {
+        dateStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        dateStr = dt.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
     return `
       <div class="history-item">
         <div class="history-item-left">
