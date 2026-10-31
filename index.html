@@ -1,276 +1,616 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Discipl Partner - Cashier QR Scanner</title>
-  <meta name="theme-color" content="#121212">
+  <title>Discipl Partner Pass</title>
+  <meta name="theme-color" content="#0c0e12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <!-- HTML5 QR Code Scanner CDN -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div id="app">
-    <!-- Header -->
+    <!-- Top Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="logo-badge">DISCIPL</div>
-        <span class="partner-tag">PARTNER PASS</span>
+        <button id="navBackBtn" class="header-back-btn hidden" aria-label="Go Back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <!-- Transparent PNG Brand Logo -->
+        <img class="brand-logo" src="data:image/png;base64,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" alt="DISCIPL" />
+        <span class="header-partner-label">PARTNER PASS</span>
       </div>
-      <div class="header-right" id="headerRight">
-        <button id="settingsBtn" class="icon-btn" title="API Settings">⚙️</button>
-        <button id="logoutBtn" class="icon-btn hidden" title="Logout">🚪</button>
+      <div class="header-right">
+        <!-- Calendar Filter Button (Screen 5) -->
+        <button id="calendarBtn" class="header-icon-btn hidden" aria-label="Filter Calendar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </button>
+        <!-- 3-Dots Button -->
+        <button id="menuDotsBtn" class="header-icon-btn hidden" aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="2.2"></circle>
+            <circle cx="12" cy="12" r="2.2"></circle>
+            <circle cx="12" cy="19" r="2.2"></circle>
+          </svg>
+        </button>
       </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="main-content">
+    <!-- Screen 1: Top 3-Dots Popup Dropdown Menu -->
+    <div id="dotsMenuOverlay" class="menu-overlay hidden">
+      <div class="dots-dropdown-card" id="dotsDropdownCard">
+        <button class="dropdown-item" id="menuRefreshBtn">
+          <svg class="item-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+        <button class="dropdown-item" id="menuOffersBtn">
+          <svg class="item-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span>View Offers List</span>
+        </button>
+        <button class="dropdown-item disabled" id="menuChallengeBtn">
+          <svg class="item-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 5v14M18 5v14M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12"></path>
+          </svg>
+          <span>Start a Challenge</span>
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" id="menuAboutBtn">
+          <span>About Us</span>
+          <svg class="chevron-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button class="dropdown-item" id="menuPrivacyBtn">
+          <span>Privacy Policy</span>
+          <svg class="chevron-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button class="dropdown-item" id="menuTermsBtn">
+          <span>Terms & Condition</span>
+          <svg class="chevron-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item text-danger" id="menuLogoutBtn">
+          <svg class="item-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF453A" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Log out</span>
+        </button>
+      </div>
+    </div>
 
-      <!-- 1. LOGIN SCREEN -->
+    <!-- Main Screens Container -->
+    <main class="main-body">
+
+      <!-- LOGIN / SIGN IN SCREEN -->
       <section id="loginScreen" class="screen active">
         <div class="auth-card">
           <div class="auth-header">
-            <div class="auth-icon">🏪</div>
-            <h2>Partner Cashier Login</h2>
-            <p>Scan member QR codes and apply instant Discipl discounts</p>
+            <div class="auth-icon-wrap">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
+            <h2>Cashier Portal</h2>
+            <p>Scan member pass, redeem winner prizes &amp; apply discounts</p>
           </div>
           <form id="loginForm" class="auth-form">
-            <div class="form-group">
-              <label for="loginUsername">Username / Mobile</label>
-              <input type="text" id="loginUsername" placeholder="e.g. cashier_hotel1" required autocomplete="username">
+            <div class="input-field">
+              <label>Username / Mobile Number</label>
+              <input type="text" id="loginUsername" placeholder="e.g. cashier_1" required autocomplete="username">
             </div>
-            <div class="form-group">
-              <label for="loginPassword">Password</label>
-              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+            <div class="input-field">
+              <label>Password</label>
+              <input type="password" id="loginPassword" placeholder="********" required autocomplete="current-password">
             </div>
-            <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
-              <span class="btn-text">Sign In as Cashier</span>
-              <div class="spinner hidden" id="loginSpinner"></div>
+            <button type="submit" class="primary-red-btn" id="loginSubmitBtn">
+              <span>Sign In</span>
             </button>
           </form>
-          <div id="loginError" class="alert alert-danger hidden"></div>
+          <div id="loginError" class="auth-error-msg hidden"></div>
         </div>
       </section>
 
-      <!-- 2. SCANNER & CASHIER WORKSPACE -->
+      <!-- SCREEN 2 & 3: HOME DASHBOARD -->
+      <section id="homeScreen" class="screen">
+        <!-- Today's Earnings Top Card (Masked by default) -->
+        <div class="earnings-summary-card" id="todayEarningsCard">
+          <div class="card-left-icon">
+            <div class="wallet-icon-ring">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="4"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <circle cx="17" cy="15" r="1.5" fill="#34C759"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="card-center-info">
+            <span class="card-label">Today’s Earnings</span>
+            <div class="amount-container">
+              <!-- Amount hidden by default -->
+              <span id="todayEarningsValue" class="earnings-amount hidden">₹0.00</span>
+              <!-- Masked bar visible by default -->
+              <div id="todayEarningsMask" class="earnings-masked-bar"></div>
+            </div>
+          </div>
+          <div class="card-right-actions">
+            <button id="toggleMaskBtn" class="mask-toggle-btn" aria-label="Toggle Amount Visibility">
+              <!-- Eye Off (masked) visible by default -->
+              <svg id="eyeOffIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+              <!-- Eye On (visible) hidden by default -->
+              <svg id="eyeOnIcon" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+            <div class="card-chevron">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Cards -->
+        <div class="quick-actions-grid">
+          <!-- Scan QR Action -->
+          <div class="action-card" id="actionScanCard">
+            <div class="action-icon-wrap red-glow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF453A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                <path d="M14 14h2v2h-2z"></path>
+                <path d="M20 14v2h-2"></path>
+                <path d="M14 20h4v-2"></path>
+                <path d="M20 20v.01"></path>
+              </svg>
+            </div>
+            <div class="action-text">
+              <span class="action-title">Scan QR</span>
+              <span class="action-sub">Discount &amp; Winner Pass</span>
+            </div>
+            <div class="action-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF453A" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Bills Action -->
+          <div class="action-card" id="actionBillsCard">
+            <div class="action-icon-wrap blue-glow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9V2h12v7"></path>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <path d="M6 14h12v8H6z"></path>
+              </svg>
+            </div>
+            <div class="action-text">
+              <span class="action-title">Bills</span>
+              <span class="action-sub" id="todayBillsCountLabel">0 Bills Today</span>
+            </div>
+            <div class="action-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Bills Container -->
+        <div class="content-box recent-bills-box">
+          <div class="box-header">
+            <span class="box-title">Bills</span>
+            <span class="box-count" id="homeBillsCount">0 items</span>
+          </div>
+          <div class="bills-list-stack" id="homeBillsList">
+            <!-- Dynamic Database Bills rendered here -->
+          </div>
+          <button class="expand-pill-btn hidden" id="homeExpandBillsBtn">
+            <span>Expand</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: SCANNER SCREEN -->
       <section id="scannerScreen" class="screen">
-        <!-- Merchant Info Bar -->
-        <div class="merchant-bar">
-          <div class="merchant-info">
-            <h3 id="merchantName">Partner Merchant</h3>
-            <span id="merchantDiscountBadge" class="discount-pill">15% DISCOUNT</span>
-          </div>
-          <div class="staff-info">
-            <span class="staff-role" id="staffRole">Cashier</span>
-            <span class="staff-name" id="staffName">Staff</span>
+        <div class="scanner-page-header">
+          <h2>Scan Partner Pass</h2>
+          <p>Scan customer QR to check Challenge Winner prizes or apply member discount.</p>
+        </div>
+
+        <!-- Viewfinder Box -->
+        <div class="camera-card">
+          <div id="reader" class="html5-qr-reader"></div>
+          <div class="camera-overlay">
+            <div class="scanner-brackets">
+              <div class="corner-bracket tl"></div>
+              <div class="corner-bracket tr"></div>
+              <div class="corner-bracket bl"></div>
+              <div class="corner-bracket br"></div>
+              <div class="scan-laser-line"></div>
+            </div>
+            <button id="torchToggleBtn" class="torch-btn" aria-label="Toggle Flashlight">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <!-- Tab Navigation -->
-        <div class="tab-nav">
-          <button class="tab-btn active" data-tab="scanTab">📷 Scan QR</button>
-          <button class="tab-btn" data-tab="historyTab">📋 Today's Bills (<span id="todayCount">0</span>)</button>
+        <!-- Scanning Tips Card -->
+        <div class="scanning-tips-card">
+          <h4>Scanning tips</h4>
+          <div class="tip-row">
+            <div class="tip-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span>Keep the QR code centered and steady.</span>
+          </div>
+          <div class="tip-row">
+            <div class="tip-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span>Challenge winners are detected automatically from the same QR.</span>
+          </div>
         </div>
 
-        <!-- TAB 1: SCAN VIEW -->
-        <div id="scanTab" class="tab-content active">
-          <!-- Step 1: Camera Scanner Card -->
-          <div class="scanner-card" id="scannerCard">
-            <div class="camera-wrapper">
-              <div id="reader"></div>
-              <div class="scanner-overlay" id="scannerOverlay">
-                <div class="scan-frame">
-                  <div class="corner tl"></div>
-                  <div class="corner tr"></div>
-                  <div class="corner bl"></div>
-                  <div class="corner br"></div>
-                  <div class="scan-laser"></div>
-                </div>
-                <p class="scan-instruction">Align customer Discipl QR code inside the frame</p>
-              </div>
+        <!-- Primary Red Scan Button -->
+        <button id="scanCameraTriggerBtn" class="primary-red-btn">
+          <span>Scan QR Code</span>
+        </button>
+
+        <!-- Hidden Image Input for Gallery/File QR Scan Fallback -->
+        <input type="file" id="qrImageFileInput" accept="image/*" class="sr-only-input" />
+
+        <!-- Enter Code Manually Link -->
+        <div class="manual-code-link" id="enterCodeManuallyBtn">
+          <span>Enter code manually</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: BILLS / BILL HISTORY SCREEN -->
+      <section id="billsScreen" class="screen">
+        <div class="page-title-row bills-title-flex">
+          <h2>Bills</h2>
+          <button id="clearBillsDateBtn" class="active-date-badge hidden">
+            <span id="billsActiveDateLabel">All Dates</span>
+            <span>&times;</span>
+          </button>
+        </div>
+
+        <!-- Monthly Grouped Bills Container -->
+        <div id="monthlyBillsContainer" class="monthly-groups-container">
+          <!-- Live Database Groups injected dynamically -->
+        </div>
+      </section>
+
+      <!-- SCREEN 6: EARNINGS BREAKDOWN SCREEN -->
+      <section id="earningsScreen" class="screen">
+        <!-- Segmented Controls (Day | Month | Year) -->
+        <div class="segmented-control" id="periodSegmentedControl">
+          <button class="segment-btn active" data-period="day">Day</button>
+          <button class="segment-btn" data-period="month">Month</button>
+          <button class="segment-btn" data-period="year">Year</button>
+        </div>
+
+        <!-- Sub-filter Pills (Today | Select a day) -->
+        <div class="subfilter-row" id="subfilterRow">
+          <button class="subfilter-pill active" id="subfilterTodayBtn" type="button">Today</button>
+          <button class="subfilter-pill" id="subfilterSelectBtn" type="button">Select a day</button>
+          <input type="date" id="nativeDatePicker" class="sr-only-input" />
+        </div>
+
+        <!-- Earnings Main Card -->
+        <div class="earnings-hero-card">
+          <div class="hero-top-row">
+            <div class="hero-label-wrap">
+              <span class="hero-title" id="earningsHeroTitle">Today's Earnings</span>
+              <span class="hero-updated" id="earningsUpdatedTime">Updated</span>
             </div>
-            <div class="scanner-actions">
-              <button id="toggleCameraBtn" class="btn btn-secondary btn-sm">🔄 Switch Camera</button>
-              <button id="manualEntryBtn" class="btn btn-outline btn-sm">⌨️ Enter Code Manually</button>
+            <div class="growth-badge" id="earningsGrowthBadge">+0.0%</div>
+          </div>
+
+          <div class="hero-amount-row">
+            <div class="wallet-icon-ring large">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.2">
+                <rect x="2" y="4" width="20" height="16" rx="4"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <circle cx="17" cy="15" r="1.5" fill="#34C759"></circle>
+              </svg>
+            </div>
+            <div class="hero-numbers">
+              <div class="hero-amount" id="earningsHeroAmount">₹0.00</div>
+              <div class="hero-sub" id="earningsHeroOrdersSettled">0 orders settled</div>
             </div>
           </div>
 
-          <!-- Manual Code Modal / Input -->
-          <div id="manualCodeBox" class="manual-code-box hidden">
-            <h4>Enter Member Token or Code</h4>
-            <div class="input-group">
-              <input type="text" id="manualCodeInput" placeholder="Paste QR token or DISC-XXXXXX">
-              <button id="verifyManualCodeBtn" class="btn btn-primary">Verify</button>
+          <div class="hero-metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Avg. order</span>
+              <span class="metric-value" id="earningsAvgOrder">₹0</span>
             </div>
-            <button id="closeManualBtn" class="btn-link">Cancel</button>
-          </div>
-
-          <!-- Step 2: Verification Result & Bill Calculator (Shown after scan) -->
-          <div id="billCard" class="bill-card hidden">
-            <!-- Member Status Header -->
-            <div class="member-header" id="memberHeader">
-              <div class="member-avatar-wrap">
-                <img id="memberAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
-              </div>
-              <div class="member-details">
-                <div class="member-name-row">
-                  <h3 id="memberName">Customer Name</h3>
-                  <span id="memberStatusBadge" class="status-badge status-active">ACTIVE MEMBER</span>
-                </div>
-                <div class="member-meta">
-                  <span id="memberCode" class="member-code">DISC-000123</span>
-                  <span id="memberGym" class="member-gym">Alpha Fitness Nanminda</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Discount Notice -->
-            <div class="discount-banner">
-              <div class="discount-icon">🎉</div>
-              <div class="discount-text">
-                <strong id="eligibleDiscountText">15% Instant Discount Applicable</strong>
-                <span>Eligible Discipl VIP Member</span>
-              </div>
-            </div>
-
-            <!-- Bill Calculator Form -->
-            <div class="bill-form">
-              <div class="form-group">
-                <label for="billAmountInput">Original Bill Amount (₹)</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">₹</span>
-                  <input type="number" id="billAmountInput" placeholder="0.00" step="0.01" min="1" autofocus>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="invoiceNoInput">Bill / Invoice Number (Optional)</label>
-                <input type="text" id="invoiceNoInput" placeholder="e.g. INV-10492">
-              </div>
-
-              <!-- Live Breakdown Summary -->
-              <div class="breakdown-card">
-                <div class="breakdown-row">
-                  <span>Gross Total</span>
-                  <span id="breakdownGross">₹0.00</span>
-                </div>
-                <div class="breakdown-row highlight-green">
-                  <span>Discipl Discount (<span id="breakdownDiscountRate">15%</span>)</span>
-                  <span id="breakdownDiscountAmount">- ₹0.00</span>
-                </div>
-                <div class="breakdown-divider"></div>
-                <div class="breakdown-row grand-total">
-                  <span>Final Payable Amount</span>
-                  <span id="breakdownFinalAmount">₹0.00</span>
-                </div>
-                <div class="breakdown-row reward-row">
-                  <span>Customer Reward XP Earned</span>
-                  <span id="breakdownPoints" class="reward-xp">+ 0 XP</span>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="bill-actions">
-                <button id="resetScanBtn" class="btn btn-secondary">Cancel</button>
-                <button id="submitTransactionBtn" class="btn btn-success btn-lg">
-                  <span class="btn-text">Confirm & Record Bill</span>
-                  <div class="spinner hidden" id="submitSpinner"></div>
-                </button>
-              </div>
+            <div class="metric-card">
+              <span class="metric-label">Discount Given</span>
+              <span class="metric-value" id="earningsDiscountGiven">₹0.00</span>
             </div>
           </div>
         </div>
 
-        <!-- TAB 2: TODAY'S TRANSACTIONS HISTORY -->
-        <div id="historyTab" class="tab-content">
-          <div class="history-header">
-            <h4>Today's Scanned Bills</h4>
-            <div class="history-summary">
-              <div class="stat-pill">
-                <span>Total Bills:</span>
-                <strong id="statTotalBills">0</strong>
+        <!-- Earnings Breakdown Card -->
+        <div class="content-box breakdown-card">
+          <div class="box-header">
+            <span class="box-title">Earnings Breakdown</span>
+            <span class="box-count" id="breakdownPeriodLabel">Today</span>
+          </div>
+          <div class="breakdown-rows-list">
+            <div class="breakdown-row">
+              <div class="row-left">
+                <span class="primary-txt">Order revenue</span>
+                <span class="sub-txt" id="bdOrdersCount">0 orders</span>
               </div>
-              <div class="stat-pill">
-                <span>Total Sales:</span>
-                <strong id="statTotalSales">₹0.00</strong>
+              <span class="row-val" id="bdOrderRevenue">₹0.00</span>
+            </div>
+
+            <div class="breakdown-row">
+              <div class="row-left">
+                <span class="primary-txt">Cashback given</span>
+                <span class="sub-txt" id="bdEligibleBills">0 eligible bills</span>
               </div>
-              <div class="stat-pill">
-                <span>Discounts Given:</span>
-                <strong id="statTotalDiscounts">₹0.00</strong>
+              <span class="row-val" id="bdCashbackGiven">₹0.00</span>
+            </div>
+
+            <div class="breakdown-row">
+              <div class="row-left">
+                <span class="primary-txt">Partner fee</span>
+                <span class="sub-txt">Platform deduction</span>
               </div>
+              <span class="row-val" id="bdPartnerFee">₹0.00</span>
+            </div>
+
+            <div class="breakdown-divider"></div>
+
+            <div class="breakdown-row total-row">
+              <span class="total-label">Net payout</span>
+              <span class="total-val" id="bdNetPayout">₹0.00</span>
             </div>
           </div>
-          <div id="historyList" class="history-list">
-            <div class="empty-history">
-              <span>🧾 No transactions recorded yet today</span>
-            </div>
+        </div>
+
+        <!-- Partner Fee History Action Card -->
+        <div class="partner-fee-link-card" id="openFeeHistoryCard">
+          <div class="fee-link-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
           </div>
+          <div class="fee-link-text">
+            <span class="fee-link-title">Partner Fee History</span>
+            <span class="fee-link-sub" id="feePendingStatusNotice">
+              <span class="dot-green"></span> Check fee status
+            </span>
+          </div>
+          <svg class="chevron-right" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: PARTNER FEE HISTORY SCREEN -->
+      <section id="feeHistoryScreen" class="screen">
+        <!-- Current Month Pending Card -->
+        <div class="pending-fee-card" id="pendingFeeCard">
+          <div class="pending-fee-left">
+            <h3 id="pendingMonthTitle">No Pending Fees</h3>
+            <p id="pendingMonthStats">Earned: ₹0 • Customers: 0</p>
+          </div>
+          <button class="pay-discipl-pill-btn hidden" id="payDisciplBtn">
+            Pay Fee
+          </button>
+        </div>
+
+        <!-- Past Payments Container -->
+        <div class="content-box past-fees-box">
+          <div class="box-header">
+            <span class="box-title">Partner Fee History</span>
+            <span class="box-count" id="pastPaymentsCountLabel">0 payments</span>
+          </div>
+          <div class="past-fees-list" id="pastFeesList">
+            <!-- Dynamic database fee records injected here -->
+          </div>
+          <button class="expand-pill-btn hidden" id="expandPastFeesBtn">
+            <span>Expand</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
         </div>
       </section>
 
     </main>
 
-    <!-- RECEIPT MODAL POPUP -->
-    <div id="receiptModal" class="modal-backdrop hidden">
-      <div class="receipt-card">
-        <div class="receipt-icon">✅</div>
-        <h2>Discount Applied!</h2>
-        <p class="receipt-subtitle">Transaction Recorded Successfully</p>
+    <!-- Bottom Dock Navigation Bar (HIDDEN BY DEFAULT ON LOGIN) -->
+    <nav class="bottom-dock hidden" id="bottomDock">
+      <button class="dock-btn red-btn" id="dockScannerBtn" aria-label="Scanner">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+      </button>
+      <button class="dock-btn blue-btn" id="dockBillsBtn" aria-label="Bills">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M6 9V2h12v7"></path>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <path d="M6 14h12v8H6z"></path>
+        </svg>
+      </button>
+      <button class="dock-btn green-btn active" id="dockHomeBtn" aria-label="Home">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="2" y="4" width="20" height="16" rx="4"></rect>
+          <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+      </button>
+    </nav>
 
-        <div class="receipt-ticket">
-          <div class="ticket-row">
-            <span>Transaction ID</span>
-            <strong id="receiptTxnId">#000</strong>
-          </div>
-          <div class="ticket-row">
-            <span>Customer</span>
-            <strong id="receiptCustomer">Customer</strong>
-          </div>
-          <div class="ticket-row">
-            <span>Original Bill</span>
-            <span id="receiptOriginal">₹0.00</span>
-          </div>
-          <div class="ticket-row discount-row">
-            <span>Discount Saved</span>
-            <strong id="receiptDiscount">- ₹0.00</strong>
-          </div>
-          <div class="ticket-divider"></div>
-          <div class="ticket-row final-row">
-            <span>Amount Paid</span>
-            <strong id="receiptFinal">₹0.00</strong>
-          </div>
-          <div class="ticket-row points-row">
-            <span>Discipl Points Credited</span>
-            <span id="receiptPoints" class="points-badge">+0 XP</span>
-          </div>
+    <!-- MODAL 1: Winner Prize Redemption & Bill Calculation Modal -->
+    <div id="billModal" class="app-modal hidden">
+      <div class="modal-card modal-scrollable">
+        <div class="modal-header">
+          <h3 id="billModalTitle">Apply Discipl Discount</h3>
+          <button class="close-modal-btn" id="closeBillModal">&times;</button>
         </div>
 
-        <button id="closeReceiptBtn" class="btn btn-primary btn-block">Scan Next Customer</button>
+        <div class="customer-verify-summary" id="modalCustomerInfo">
+          <!-- Customer info loaded from DB -->
+        </div>
+
+        <!-- Challenge Winner Unclaimed Prizes Container (Injected dynamically when winner) -->
+        <div id="winnerPrizeSection" class="winner-prize-section hidden"></div>
+
+        <!-- Notice if customer won a challenge for a DIFFERENT brand -->
+        <div id="otherBrandWinNotice" class="other-brand-win-notice hidden"></div>
+
+        <!-- Toggle button shown for winners if they ALSO order extra paid items -->
+        <button type="button" id="toggleExtraBillBtn" class="extra-bill-toggle-btn hidden">
+          <span>+ Also ordering extra paid items? Apply Member Discount</span>
+        </button>
+
+        <!-- Standard Paid Bill & Discount Section -->
+        <div id="regularBillSection">
+          <div class="form-group">
+            <label>Original Total Bill Amount (₹)</label>
+            <input type="number" id="billAmountInput" placeholder="Enter amount (e.g. 500)" step="0.01">
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label>POS Invoice / Bill No. (Optional)</label>
+            <input type="text" id="billInvoiceInput" placeholder="e.g. INV-1024">
+          </div>
+          <div class="discount-calculation-box">
+            <div class="calc-row"><span>Discount Rate:</span><strong id="modalDiscountRate">0%</strong></div>
+            <div class="calc-row text-success"><span>Customer Savings:</span><strong id="modalDiscountSavings">₹0.00</strong></div>
+            <div class="calc-row total"><span>Payable by Customer:</span><strong id="modalPayableAmount">₹0.00</strong></div>
+          </div>
+          <button id="settleBillBtn" class="primary-red-btn" style="margin-top: 16px;">
+            <span>Complete &amp; Record Bill</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="modal-backdrop hidden">
+    <!-- MODAL 2: Manual Code Entry Modal -->
+    <div id="manualCodeModal" class="app-modal hidden">
       <div class="modal-card">
-        <h3>Backend API Settings</h3>
-        <p>Configure the server endpoint for the scanner</p>
-        <div class="form-group">
-          <label for="apiUrlInput">API Base URL</label>
-          <input type="text" id="apiUrlInput" placeholder="https://discipl.app">
-          <small>For local testing: <code>http://localhost:8000</code> or your Render URL</small>
+        <div class="modal-header">
+          <h3>Enter Member Code</h3>
+          <button class="close-modal-btn" id="closeManualModal">&times;</button>
         </div>
-        <div class="modal-actions">
-          <button id="saveSettingsBtn" class="btn btn-primary">Save & Apply</button>
-          <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
+        <p class="modal-desc">Type the customer's Discipl member code, mobile number, or token shown on their pass screen.</p>
+        <div class="form-group">
+          <input type="text" id="manualCodeInput" placeholder="DISC-000025 or Mobile No." style="text-transform: uppercase;">
+        </div>
+        <button id="submitManualCodeBtn" class="primary-red-btn" style="margin-top: 14px;">
+          <span>Verify Code</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 3: Offers List Modal -->
+    <div id="offersModal" class="app-modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Active Partner Offers</h3>
+          <button class="close-modal-btn" id="closeOffersModal">&times;</button>
+        </div>
+        <div id="offersListContent" class="offers-modal-body">
+          <!-- Loaded dynamically from database -->
         </div>
       </div>
     </div>
 
+    <!-- MODAL 4: Generic Info Modal (About, Privacy, Terms) -->
+    <div id="infoModal" class="app-modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="infoModalTitle">Info</h3>
+          <button class="close-modal-btn" id="closeInfoModal">&times;</button>
+        </div>
+        <div id="infoModalBody" class="info-modal-body">
+          <!-- Text loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: Select a Day / Calendar Date Picker Modal -->
+    <div id="datePickerModal" class="app-modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Select a Day</h3>
+          <button class="close-modal-btn" id="closeDateModal">&times;</button>
+        </div>
+        <p class="modal-desc">Choose a date to view bills and earnings recorded on that day.</p>
+        <div class="quick-date-pills">
+          <button type="button" class="subfilter-pill" id="quickDateTodayBtn">Today</button>
+          <button type="button" class="subfilter-pill" id="quickDateYesterdayBtn">Yesterday</button>
+          <button type="button" class="subfilter-pill" id="quickDateResetBtn">All Dates</button>
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label>Pick Date</label>
+          <input type="date" id="modalDateInput" class="dark-date-input">
+        </div>
+        <button id="applyDateFilterBtn" class="primary-red-btn" style="margin-top: 16px;">
+          <span>Apply Date Filter</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification hidden"></div>
   </div>
 
   <script src="app.js"></script>
 </body>
+
 </html>

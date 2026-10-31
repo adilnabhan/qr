@@ -12,8 +12,9 @@ A lightweight, mobile-responsive Web App for Partner Merchants (Hotels, Restaura
    - Fast, continuous camera scanning using `html5-qrcode`.
    - Supports camera switching (Rear / Front) and manual code input fallback (`DISC-XXXXXX`).
 
-3. **Instant Member Verification**:
+3. **Instant Member & Challenge Winner Verification**:
    - Validates active Discipl gym membership status in real-time.
+   - Detects unclaimed **Challenge Winner** prizes (e.g. *14's Shawaya Challenge Winner*) with 1-tap **"Redeem Winner Prize (Free)"**.
    - Shows customer profile picture, full name, member code, and registered fitness center.
    - Prevents discounts for expired or non-active members.
 
